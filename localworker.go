@@ -223,7 +223,11 @@ func (l *LocalWorker) Paths(ctx context.Context) ([]stores.StoragePath, error) {
 	return l.localStore.Local(ctx)
 }
 
+
+//111111111111111111111111111111
 func (l *LocalWorker) Info(context.Context) (storiface.WorkerInfo, error) {
+
+
 	hostname, err := os.Hostname() // TODO: allow overriding from config
 	if err != nil {
 		panic(err)
@@ -244,6 +248,11 @@ func (l *LocalWorker) Info(context.Context) (storiface.WorkerInfo, error) {
 		return storiface.WorkerInfo{}, xerrors.Errorf("getting memory info: %w", err)
 	}
 
+	workerIp,err := getLocatAddr()
+	if err != nil {
+		return storiface.WorkerInfo{}, xerrors.Errorf("getting workerIp info: %w", err)
+	}
+
 	return storiface.WorkerInfo{
 		Hostname: hostname,
 		Resources: storiface.WorkerResources{
@@ -253,6 +262,7 @@ func (l *LocalWorker) Info(context.Context) (storiface.WorkerInfo, error) {
 			CPUs:        uint64(runtime.NumCPU()),
 			GPUs:        gpus,
 		},
+		WorkerIp:	 workerIp,
 	}, nil
 }
 
@@ -265,3 +275,19 @@ func (l *LocalWorker) Close() error {
 }
 
 var _ Worker = &LocalWorker{}
+
+
+func getLocatAddr()(string addr,err error){
+	name, err := os.Hostname()
+	if err != nil {
+		fmt.Printf("111111111111111---Oops: %v\n", err)
+		return
+	}
+
+	addrs, err := net.LookupHost(name)
+	if err != nil {
+		fmt.Printf("211111111111111---Oops: %v\n", err)
+		return
+	}
+	fmt.Println("311111111111111---",addrs[1])
+}

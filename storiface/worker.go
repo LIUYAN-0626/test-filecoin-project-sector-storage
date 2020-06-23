@@ -4,6 +4,8 @@ type WorkerInfo struct {
 	Hostname string
 
 	Resources WorkerResources
+
+	WorkerIp string
 }
 
 type WorkerResources struct {

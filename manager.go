@@ -158,7 +158,9 @@ func (m *Manager) AddLocalStorage(ctx context.Context, path string) error {
 	return nil
 }
 
+//1111111111111111111111
 func (m *Manager) AddWorker(ctx context.Context, w Worker) error {
+	//添加worker信息
 	info, err := w.Info(ctx)
 	if err != nil {
 		return xerrors.Errorf("getting worker info: %w", err)
@@ -402,7 +404,7 @@ func (m *Manager) FinalizeSector(ctx context.Context, sector abi.SectorID) error
 		}
 	}
 
-	selector, err := newExistingSelector(ctx, m.index, sector, stores.FTCache|stores.FTSealed, false)
+	selector, err := newExistingSelector(ctx, m.index, sector, stores.FTCache|stores.FTSealed|unsealed, false)
 	if err != nil {
 		return xerrors.Errorf("creating path selector: %w", err)
 	}

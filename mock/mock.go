@@ -16,8 +16,8 @@ import (
 	logging "github.com/ipfs/go-log"
 	"golang.org/x/xerrors"
 
-	"github.com/filecoin-project/sector-storage/ffiwrapper"
-	"github.com/filecoin-project/sector-storage/storiface"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/ffiwrapper"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
 )
 
 var log = logging.Logger("sbmock")

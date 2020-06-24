@@ -14,10 +14,10 @@ import (
 	"github.com/filecoin-project/specs-actors/actors/abi"
 	"github.com/filecoin-project/specs-storage/storage"
 
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/ffiwrapper"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/sealtasks"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/stores"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
+	"github.com/filecoin-project/sector-storage/ffiwrapper"
+	"github.com/filecoin-project/sector-storage/sealtasks"
+	"github.com/filecoin-project/sector-storage/stores"
+	"github.com/filecoin-project/sector-storage/storiface"
 )
 
 var log = logging.Logger("advmgr")
@@ -158,9 +158,7 @@ func (m *Manager) AddLocalStorage(ctx context.Context, path string) error {
 	return nil
 }
 
-//1111111111111111111111
 func (m *Manager) AddWorker(ctx context.Context, w Worker) error {
-	//添加worker信息
 	info, err := w.Info(ctx)
 	if err != nil {
 		return xerrors.Errorf("getting worker info: %w", err)
@@ -384,7 +382,7 @@ func (m *Manager) SealCommit2(ctx context.Context, sector abi.SectorID, phase1Ou
 	return out, err
 }
 
-func (m *Manager) FinalizeSector(ctx context.Context, sector abi.SectorID) error {
+func (m *Manager) FinalizeSector(ctx context.Context, sector abi.SectorID, keepUnsealed []storage.Range) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -404,7 +402,7 @@ func (m *Manager) FinalizeSector(ctx context.Context, sector abi.SectorID) error
 		}
 	}
 
-	selector, err := newExistingSelector(ctx, m.index, sector, stores.FTCache|stores.FTSealed|unsealed, false)
+	selector, err := newExistingSelector(ctx, m.index, sector, stores.FTCache|stores.FTSealed, false)
 	if err != nil {
 		return xerrors.Errorf("creating path selector: %w", err)
 	}
@@ -412,7 +410,7 @@ func (m *Manager) FinalizeSector(ctx context.Context, sector abi.SectorID) error
 	err = m.sched.Schedule(ctx, sector, sealtasks.TTFinalize, selector,
 		schedFetch(sector, stores.FTCache|stores.FTSealed|unsealed, stores.PathSealing, stores.AcquireMove),
 		func(ctx context.Context, w Worker) error {
-			return w.FinalizeSector(ctx, sector)
+			return w.FinalizeSector(ctx, sector, keepUnsealed)
 		})
 	if err != nil {
 		return err
@@ -423,8 +421,15 @@ func (m *Manager) FinalizeSector(ctx context.Context, sector abi.SectorID) error
 		return xerrors.Errorf("creating fetchSel: %w", err)
 	}
 
+	moveUnsealed := unsealed
+	{
+		if len(keepUnsealed) == 0 {
+			moveUnsealed = stores.FTNone
+		}
+	}
+
 	err = m.sched.Schedule(ctx, sector, sealtasks.TTFetch, fetchSel,
-		schedFetch(sector, stores.FTCache|stores.FTSealed, stores.PathStorage, stores.AcquireMove),
+		schedFetch(sector, stores.FTCache|stores.FTSealed|moveUnsealed, stores.PathStorage, stores.AcquireMove),
 		func(ctx context.Context, w Worker) error {
 			return w.MoveStorage(ctx, sector)
 		})
@@ -433,6 +438,42 @@ func (m *Manager) FinalizeSector(ctx context.Context, sector abi.SectorID) error
 	}
 
 	return nil
+}
+
+func (m *Manager) ReleaseUnsealed(ctx context.Context, sector abi.SectorID, safeToFree []storage.Range) error {
+	return xerrors.Errorf("implement me")
+}
+
+func (m *Manager) Remove(ctx context.Context, sector abi.SectorID) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	if err := m.index.StorageLock(ctx, sector, stores.FTNone, stores.FTSealed|stores.FTUnsealed|stores.FTCache); err != nil {
+		return xerrors.Errorf("acquiring sector lock: %w", err)
+	}
+
+	unsealed := stores.FTUnsealed
+	{
+		unsealedStores, err := m.index.StorageFindSector(ctx, sector, stores.FTUnsealed, false)
+		if err != nil {
+			return xerrors.Errorf("finding unsealed sector: %w", err)
+		}
+
+		if len(unsealedStores) == 0 { // can be already removed
+			unsealed = stores.FTNone
+		}
+	}
+
+	selector, err := newExistingSelector(ctx, m.index, sector, stores.FTCache|stores.FTSealed, false)
+	if err != nil {
+		return xerrors.Errorf("creating selector: %w", err)
+	}
+
+	return m.sched.Schedule(ctx, sector, sealtasks.TTFinalize, selector,
+		schedFetch(sector, stores.FTCache|stores.FTSealed|unsealed, stores.PathStorage, stores.AcquireMove),
+		func(ctx context.Context, w Worker) error {
+			return w.Remove(ctx, sector)
+		})
 }
 
 func (m *Manager) StorageLocal(ctx context.Context) (map[stores.ID]string, error) {

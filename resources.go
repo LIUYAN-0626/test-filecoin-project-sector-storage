@@ -3,7 +3,7 @@ package sectorstorage
 import (
 	"github.com/filecoin-project/specs-actors/actors/abi"
 
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/sealtasks"
+	"github.com/filecoin-project/sector-storage/sealtasks"
 )
 
 type Resources struct {

@@ -24,8 +24,8 @@ import (
 	"github.com/filecoin-project/specs-actors/actors/abi"
 	"github.com/filecoin-project/specs-storage/storage"
 
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/ffiwrapper/basicfs"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/stores"
+	"github.com/filecoin-project/sector-storage/ffiwrapper/basicfs"
+	"github.com/filecoin-project/sector-storage/stores"
 )
 
 func init() {
@@ -297,7 +297,7 @@ func TestSealAndVerify(t *testing.T) {
 
 	post(t, sb, s)
 
-	if err := sb.FinalizeSector(context.TODO(), si); err != nil {
+	if err := sb.FinalizeSector(context.TODO(), si, nil); err != nil {
 		t.Fatalf("%+v", err)
 	}
 
@@ -358,7 +358,7 @@ func TestSealPoStNoCommit(t *testing.T) {
 
 	precommit := time.Now()
 
-	if err := sb.FinalizeSector(context.TODO(), si); err != nil {
+	if err := sb.FinalizeSector(context.TODO(), si, nil); err != nil {
 		t.Fatal(err)
 	}
 

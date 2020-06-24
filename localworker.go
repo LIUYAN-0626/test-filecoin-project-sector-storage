@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/elastic/go-sysinfo"
+	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-cid"
 	"golang.org/x/xerrors"
 
@@ -14,10 +15,10 @@ import (
 	"github.com/filecoin-project/specs-actors/actors/abi"
 	storage2 "github.com/filecoin-project/specs-storage/storage"
 
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/ffiwrapper"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/sealtasks"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/stores"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
+	"github.com/filecoin-project/sector-storage/ffiwrapper"
+	"github.com/filecoin-project/sector-storage/sealtasks"
+	"github.com/filecoin-project/sector-storage/stores"
+	"github.com/filecoin-project/sector-storage/storiface"
 )
 
 var pathTypes = []stores.SectorFileType{stores.FTUnsealed, stores.FTSealed, stores.FTCache}
@@ -160,13 +161,13 @@ func (l *LocalWorker) SealCommit2(ctx context.Context, sector abi.SectorID, phas
 	return sb.SealCommit2(ctx, sector, phase1Out)
 }
 
-func (l *LocalWorker) FinalizeSector(ctx context.Context, sector abi.SectorID) error {
+func (l *LocalWorker) FinalizeSector(ctx context.Context, sector abi.SectorID, keepUnsealed []storage2.Range) error {
 	sb, err := l.sb()
 	if err != nil {
 		return err
 	}
 
-	if err := sb.FinalizeSector(ctx, sector); err != nil {
+	if err := sb.FinalizeSector(ctx, sector, keepUnsealed); err != nil {
 		return xerrors.Errorf("finalizing sector: %w", err)
 	}
 
@@ -175,6 +176,26 @@ func (l *LocalWorker) FinalizeSector(ctx context.Context, sector abi.SectorID) e
 	}
 
 	return nil
+}
+
+func (l *LocalWorker) ReleaseUnsealed(ctx context.Context, sector abi.SectorID, safeToFree []storage2.Range) error {
+	return xerrors.Errorf("implement me")
+}
+
+func (l *LocalWorker) Remove(ctx context.Context, sector abi.SectorID) error {
+	var err error
+
+	if rerr := l.storage.Remove(ctx, sector, stores.FTSealed, true); rerr != nil {
+		err = multierror.Append(err, xerrors.Errorf("removing sector (sealed): %w", rerr))
+	}
+	if rerr := l.storage.Remove(ctx, sector, stores.FTCache, true); rerr != nil {
+		err = multierror.Append(err, xerrors.Errorf("removing sector (cache): %w", rerr))
+	}
+	if rerr := l.storage.Remove(ctx, sector, stores.FTUnsealed, true); rerr != nil {
+		err = multierror.Append(err, xerrors.Errorf("removing sector (unsealed): %w", rerr))
+	}
+
+	return err
 }
 
 func (l *LocalWorker) MoveStorage(ctx context.Context, sector abi.SectorID) error {
@@ -223,11 +244,7 @@ func (l *LocalWorker) Paths(ctx context.Context) ([]stores.StoragePath, error) {
 	return l.localStore.Local(ctx)
 }
 
-
-//111111111111111111111111111111
 func (l *LocalWorker) Info(context.Context) (storiface.WorkerInfo, error) {
-
-
 	hostname, err := os.Hostname() // TODO: allow overriding from config
 	if err != nil {
 		panic(err)
@@ -248,11 +265,6 @@ func (l *LocalWorker) Info(context.Context) (storiface.WorkerInfo, error) {
 		return storiface.WorkerInfo{}, xerrors.Errorf("getting memory info: %w", err)
 	}
 
-	workerIp,err := getLocatAddr()
-	if err != nil {
-		return storiface.WorkerInfo{}, xerrors.Errorf("getting workerIp info: %w", err)
-	}
-
 	return storiface.WorkerInfo{
 		Hostname: hostname,
 		Resources: storiface.WorkerResources{
@@ -262,7 +274,6 @@ func (l *LocalWorker) Info(context.Context) (storiface.WorkerInfo, error) {
 			CPUs:        uint64(runtime.NumCPU()),
 			GPUs:        gpus,
 		},
-		WorkerIp:	 workerIp,
 	}, nil
 }
 
@@ -275,19 +286,3 @@ func (l *LocalWorker) Close() error {
 }
 
 var _ Worker = &LocalWorker{}
-
-
-func getLocatAddr()(string addr,err error){
-	name, err := os.Hostname()
-	if err != nil {
-		fmt.Printf("111111111111111---Oops: %v\n", err)
-		return
-	}
-
-	addrs, err := net.LookupHost(name)
-	if err != nil {
-		fmt.Printf("211111111111111---Oops: %v\n", err)
-		return
-	}
-	fmt.Println("311111111111111---",addrs[1])
-}

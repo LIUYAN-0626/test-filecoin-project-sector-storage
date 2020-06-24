@@ -5,14 +5,15 @@ import (
 	"context"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/specs-actors/actors/abi"
 
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/sealtasks"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
+	"github.com/filecoin-project/sector-storage/sealtasks"
+	"github.com/filecoin-project/sector-storage/storiface"
 )
 
 const mib = 1 << 20
@@ -204,6 +205,8 @@ func (sh *scheduler) onWorkerFreed(wid WorkerID) {
 	}
 }
 
+var selectorTimeout = 5 * time.Second
+
 func (sh *scheduler) maybeSchedRequest(req *workerRequest) (bool, error) {
 	sh.workersLk.Lock()
 	defer sh.workersLk.Unlock()
@@ -214,7 +217,10 @@ func (sh *scheduler) maybeSchedRequest(req *workerRequest) (bool, error) {
 	needRes := ResourceTable[req.taskType][sh.spt]
 
 	for wid, worker := range sh.workers {
-		ok, err := req.sel.Ok(req.ctx, req.taskType, sh.spt, worker)
+		rpcCtx, cancel := context.WithTimeout(req.ctx, selectorTimeout)
+		ok, err := req.sel.Ok(rpcCtx, req.taskType, sh.spt, worker)
+		cancel()
+
 		if err != nil {
 			return false, err
 		}
@@ -236,7 +242,10 @@ func (sh *scheduler) maybeSchedRequest(req *workerRequest) (bool, error) {
 			var serr error
 
 			sort.SliceStable(acceptable, func(i, j int) bool {
-				r, err := req.sel.Cmp(req.ctx, req.taskType, sh.workers[acceptable[i]], sh.workers[acceptable[j]])
+				rpcCtx, cancel := context.WithTimeout(req.ctx, selectorTimeout)
+				defer cancel()
+				r, err := req.sel.Cmp(rpcCtx, req.taskType, sh.workers[acceptable[i]], sh.workers[acceptable[j]])
+
 				if err != nil {
 					serr = multierror.Append(serr, err)
 				}

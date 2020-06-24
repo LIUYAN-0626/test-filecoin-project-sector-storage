@@ -1,6 +1,6 @@
 package sectorstorage
 
-import "github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
+import "github.com/filecoin-project/sector-storage/storiface"
 
 func (m *Manager) WorkerStats() map[uint64]storiface.WorkerStats {
 	m.sched.workersLk.Lock()

@@ -9,10 +9,10 @@ import (
 	"github.com/filecoin-project/specs-actors/actors/abi"
 	"github.com/filecoin-project/specs-storage/storage"
 
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/mock"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/sealtasks"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/stores"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
+	"github.com/filecoin-project/sector-storage/mock"
+	"github.com/filecoin-project/sector-storage/sealtasks"
+	"github.com/filecoin-project/sector-storage/stores"
+	"github.com/filecoin-project/sector-storage/storiface"
 )
 
 type testWorker struct {
@@ -73,7 +73,15 @@ func (t *testWorker) SealCommit2(ctx context.Context, sector abi.SectorID, c1o s
 	panic("implement me")
 }
 
-func (t *testWorker) FinalizeSector(ctx context.Context, sector abi.SectorID) error {
+func (t *testWorker) FinalizeSector(ctx context.Context, sector abi.SectorID, keepUnsealed []storage.Range) error {
+	panic("implement me")
+}
+
+func (t *testWorker) ReleaseUnsealed(ctx context.Context, sector abi.SectorID, safeToFree []storage.Range) error {
+	panic("implement me")
+}
+
+func (t *testWorker) Remove(ctx context.Context, sector abi.SectorID) error {
 	panic("implement me")
 }
 

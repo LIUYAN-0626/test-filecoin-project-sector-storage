@@ -2,7 +2,7 @@ package fr32_test
 
 import (
 	"bytes"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/fr32"
+	"github.com/filecoin-project/sector-storage/fr32"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,7 +13,7 @@ import (
 	ffi "github.com/filecoin-project/filecoin-ffi"
 	"github.com/filecoin-project/specs-actors/actors/abi"
 
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/ffiwrapper"
+	"github.com/filecoin-project/sector-storage/ffiwrapper"
 )
 
 func TestWriteTwoPcs(t *testing.T) {

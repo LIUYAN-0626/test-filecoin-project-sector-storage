@@ -16,8 +16,8 @@ import (
 	logging "github.com/ipfs/go-log"
 	"golang.org/x/xerrors"
 
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/ffiwrapper"
-	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
+	"github.com/filecoin-project/sector-storage/ffiwrapper"
+	"github.com/filecoin-project/sector-storage/storiface"
 )
 
 var log = logging.Logger("sbmock")
@@ -315,7 +315,23 @@ func (mgr *SectorMgr) StageFakeData(mid abi.ActorID) (abi.SectorID, []abi.PieceI
 	return id, []abi.PieceInfo{pi}, nil
 }
 
-func (mgr *SectorMgr) FinalizeSector(context.Context, abi.SectorID) error {
+func (mgr *SectorMgr) FinalizeSector(context.Context, abi.SectorID, []storage.Range) error {
+	return nil
+}
+
+func (mgr *SectorMgr) ReleaseUnsealed(ctx context.Context, sector abi.SectorID, safeToFree []storage.Range) error {
+	panic("implement me")
+}
+
+func (mgr *SectorMgr) Remove(ctx context.Context, sector abi.SectorID) error {
+	mgr.lk.Lock()
+	defer mgr.lk.Unlock()
+
+	if _, has := mgr.sectors[sector]; !has {
+		return xerrors.Errorf("sector not found")
+	}
+
+	delete(mgr.sectors, sector)
 	return nil
 }
 
@@ -355,4 +371,5 @@ func (m mockVerif) GenerateWinningPoStSectorChallenge(ctx context.Context, proof
 
 var MockVerifier = mockVerif{}
 
+var _ storage.Sealer = &SectorMgr{}
 var _ ffiwrapper.Verifier = MockVerifier

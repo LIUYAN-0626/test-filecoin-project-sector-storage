@@ -19,8 +19,8 @@ import (
 
 	"github.com/filecoin-project/specs-actors/actors/abi"
 
-	"github.com/filecoin-project/sector-storage/storiface"
-	"github.com/filecoin-project/sector-storage/tarutil"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/tarutil"
 )
 
 type Remote struct {

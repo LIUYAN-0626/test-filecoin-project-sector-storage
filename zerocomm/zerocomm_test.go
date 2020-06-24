@@ -10,8 +10,8 @@ import (
 	abi "github.com/filecoin-project/specs-actors/actors/abi"
 	"github.com/ipfs/go-cid"
 
-	"github.com/filecoin-project/sector-storage/ffiwrapper"
-	"github.com/filecoin-project/sector-storage/zerocomm"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/ffiwrapper"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/zerocomm"
 )
 
 func TestComms(t *testing.T) {

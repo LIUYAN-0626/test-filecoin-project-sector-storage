@@ -19,10 +19,10 @@ import (
 	"github.com/filecoin-project/specs-actors/actors/abi"
 	"github.com/filecoin-project/specs-storage/storage"
 
-	"github.com/filecoin-project/sector-storage/fr32"
-	"github.com/filecoin-project/sector-storage/stores"
-	"github.com/filecoin-project/sector-storage/storiface"
-	"github.com/filecoin-project/sector-storage/zerocomm"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/fr32"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/stores"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/storiface"
+	"github.com/LIUYAN-0626/test-filecoin-project-sector-storage/zerocomm"
 )
 
 var _ Storage = &Sealer{}
